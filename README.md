@@ -10,6 +10,9 @@ see: https://ss64.com/nt/chcp.html
 
 ## Settings
 Create a local.py file with the following attributes
+```
 NICKNAME = 'name'
 CHANNELS = ['#channel1']
 SERVER = 'irc.server.net'
+PASSWORD = 'botidentpass'
+```
