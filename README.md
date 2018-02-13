@@ -16,3 +16,9 @@ CHANNELS = ['#channel1']
 SERVER = 'irc.server.net'
 PASSWORD = 'botidentpass'
 ```
+
+## Log
+### 02/13/2018
+Currently, the bot connects to irc but doesn't fully work with responses for command and for sending RSS
+news entries. Work is still needed but almost complete. RSS is able to be pulled with news stories and having a
+constant connection to IRC works. 
