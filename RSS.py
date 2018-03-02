@@ -128,6 +128,8 @@ class RSS:
 					]
 				self.logger.info('Sending %s\n\n', newsline)
 
+				self.news_entries.pop(0)
+
 				return newsline
 			except KeyError as err:
 				self.logger.error('KeyError with entry %s - %s', entry, err)

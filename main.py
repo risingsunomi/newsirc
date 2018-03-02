@@ -25,26 +25,17 @@ def app(nickname, channels, network):
 	"""
 	Where the news and irc client is placed
 	"""
-	MAIN_LOGGER.info('Initializing IRCClient')
+	MAIN_LOGGER.info('Initializing IRCClient with RSS')
 
 	iclient = IRCClient(
 		nickname=nickname,
 		channels=channels,
-		network=network
+		network=network,
+		rssobj=RSS('http://www.rssmix.com/u/8273687/rss.xml')
 	)
 
-	MAIN_LOGGER.info('Connecting to irc server')
+	MAIN_LOGGER.info('Connecting to irc server ')
 	iclient.connect()
-
-	MAIN_LOGGER.info('Initializing RSS class')
-	rssobj = RSS('http://www.rssmix.com/u/8273687/rss.xml')
-
-	MAIN_LOGGER.info('Running readFeed')
-	rssobj.readFeed()
-
-	MAIN_LOGGER.info('Sending article to IRC')
-
-	iclient.sayArticle(rssobj.printArticle())
 
 
 if __name__ == '__main__':

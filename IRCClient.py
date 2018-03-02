@@ -16,12 +16,15 @@ class IRCClient:
 	"""
 	Client for IRC using the socket library
 	"""
-	def __init__(self, nickname, channels, network):
+	def __init__(self, nickname, channels, network, rssobj):
 		self.nickname = nickname
 		self.channels = channels
 		self.network = network
+		self.rssobj = rssobj
 		self.socket = None
 		self.connected = False
+		self.shownArticle = False
+		self.pingcnt = 0 # keep count of ping for printing news
 		self.ctx = {}
 
 		# class logging setup
@@ -37,6 +40,9 @@ class IRCClient:
 			"%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 		logFileHandler.setFormatter(logFormat)
 		self.logger.addHandler(logFileHandler)
+
+		self.logger.info('Running readFeed')
+		self.rssobj.readFeed()
 
 	def connect(self, ipass=None):
 		"""
@@ -64,12 +70,14 @@ class IRCClient:
 				if data == '':
 					continue
 
-				print("I<", data)
-				print("\n\n")
+				# print("I<", data)
+				# print("\n\n")
 
 				# server ping/pong
 				if data.find('PING') != -1:
 					self.logger.info("Ping recieved")
+					self.pingcnt += 1
+					print("Ping found - cnt: {}".format(self.pingcnt))
 					n = data.split(':')[1]
 
 					sthread = threading.Thread(target=self.send, kwargs={
@@ -101,16 +109,16 @@ class IRCClient:
 					# strip message
 					# might be different on other networks
 					self.ctx['msg'] = args[3]
-					print(args[3])
+					# print(args[3])
 					self.ctx['msg'] = self.ctx['msg'].replace(':', '')
 					self.ctx['msg'] = self.ctx['msg'].replace('\r\n', '')
 					self.ctx['msg'] = self.ctx['msg'].replace('\'', '')
 
-					print(self.ctx['msg'])
+					# print(self.ctx['msg'])
 
 				# registering - needs work
 				if ipass:
-					print(self.ctx['type'])
+					# print(self.ctx['type'])
 					if self.ctx['type'] == '332':
 						print('PRIVMSG nickserv identify %s' % ipass)
 						self.send('PRIVMSG nickserv identify %s' % ipass)
@@ -162,13 +170,22 @@ class IRCClient:
 							'{}, leave me alone >:0'.format(self.ctx['sender']),
 							self.ctx['target']
 						)
+				elif (self.pingcnt % 3) == 0:
+					# every 10th ping say news
+					if self.shownArticle == False:
+						self.sayArticle()
+						self.shownArticle = True
+				else:
+					self.shownArticle == False
+
+
 
 	# IRC message protocol methods
 	def send(self, msg):
 		"""
 		Send message to IRC server via socket
 		"""
-		print("I>", msg.encode('utf-8'))
+		# print("I>", msg.encode('utf-8'))
 		self.socket.send(bytearray(msg+"\r\n", "utf-8"))
 
 	def say(self, msg, to):
@@ -180,15 +197,18 @@ class IRCClient:
 		})
 		sthread.start()
 
-	def sayArticle(self, article):
+	def sayArticle(self):
 		"""
 		For sending RSS article to irc
+		This assums it is in all the channels - will need to do some logic to check if really in channel
 		"""
-		for artline in article:
-			sthread = threading.Thread(target=self.send, kwargs={
-				'msg': "PRIVMSG %s :%s" % (self.ctx['target'], artline)
-			})
-			sthread.start()
+		for chan in self.channels:
+			for artline in self.rssobj.printArticle():
+				print("artline: {}", artline)
+				sthread = threading.Thread(target=self.send, kwargs={
+					'msg': "PRIVMSG %s :%s" % (chan, artline)
+				})
+				sthread.start()
 
 	def perform(self):
 		"""
