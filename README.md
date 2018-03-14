@@ -21,4 +21,8 @@ PASSWORD = 'botidentpass'
 ### 02/13/2018
 Currently, the bot connects to irc but doesn't fully work with responses for command and for sending RSS
 news entries. Work is still needed but almost complete. RSS is able to be pulled with news stories and having a
-constant connection to IRC works. 
+constant connection to IRC works.
+
+### 03/14/2018
+Bot works with IRC and does printing of articles via timer that counts PING coming from the server (every third PING).
+Doing tests of what to do when RSS list runs out. Logic should work in RSS.py/printArticle() but testing
