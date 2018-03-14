@@ -2,7 +2,7 @@
 This is a re-write of my old bot at https://goo.gl/ekxnJS
 into python3 and adding a logging library
 
-ak_n3tgh0st
+risingsunomi
 """
 import signal
 import os

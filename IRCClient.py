@@ -124,19 +124,6 @@ class IRCClient:
 						self.send('PRIVMSG nickserv identify %s' % ipass)
 
 
-				# some basic commands
-				if self.ctx['msg'] == '!test':
-					self.logger.info(
-						'!test command called by %s in channel %s',
-						self.ctx['sender'],
-						self.ctx['target']
-					)
-
-					self.say(
-						'{}, fuck off :3'.format(self.ctx['sender']),
-						self.ctx['target']
-					)
-
 				# private messages directed to the bot - not currently used
 				# if self.ctx['type'] == 'PRIVMSG' and (
 				# 	self.ctx['msg'].lower()[
@@ -166,17 +153,36 @@ class IRCClient:
 							query
 						)
 
-						self.say(
-							'{}, leave me alone >:0'.format(self.ctx['sender']),
-							self.ctx['target']
-						)
-				elif (self.pingcnt % 3) == 0:
+						# some basic commands
+						if self.ctx['msg'] == '!test':
+							self.logger.info(
+								'!test command called by %s in channel %s',
+								self.ctx['sender'],
+								self.ctx['target']
+							)
+
+							self.say(
+								'{}, fuck off :3'.format(self.ctx['sender']),
+								self.ctx['target']
+							)
+						else:
+							self.say(
+								'{}, leave me alone >:0'.format(self.ctx['sender']),
+								self.ctx['target']
+							)
+
+				if self.pingcnt != 0 and (self.pingcnt % 3) == 0:
+					print("pingcnt", self.pingcnt)
 					# every 10th ping say news
-					if self.shownArticle == False:
+					print("shownArticle", self.shownArticle)
+					if self.shownArticle is not False:
+						print("say article!")
 						self.sayArticle()
 						self.shownArticle = True
 				else:
-					self.shownArticle == False
+					print("wait to say article..")
+					self.shownArticle = False
+					print("shownArticle", self.shownArticle)
 
 
 
