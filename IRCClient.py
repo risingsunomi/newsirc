@@ -175,7 +175,7 @@ class IRCClient:
 					print("pingcnt", self.pingcnt)
 					# every 10th ping say news
 					print("shownArticle", self.shownArticle)
-					if self.shownArticle is not False:
+					if self.shownArticle is False:
 						print("say article!")
 						self.sayArticle()
 						self.shownArticle = True

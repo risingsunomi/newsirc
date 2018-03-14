@@ -1,8 +1,6 @@
 # NEWSIRC
 
-IRC bot for news via RSS.
-
-Currently working on finding the right scraping library as the current one seems to fail. Will work on custom scraping.
+IRC bot for news via RSS. Watch out for ugly console output due to testing.
 
 ## Windows
 To run this in the windows command prompt with foreign news sources, make sure to set utf-8 encoding via chcp 65001
