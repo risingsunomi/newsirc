@@ -27,11 +27,15 @@ def app(nickname, channels, network):
 	"""
 	MAIN_LOGGER.info('Initializing IRCClient with RSS')
 
+	# rssobj = RSS('http://www.rssmix.com/u/8273687/rss.xml')
+	# rssobj.readFeed()
+	# print("\n\nrssobj entry - {}".format(rssobj.news_entries[0]))
+
 	iclient = IRCClient(
 		nickname=nickname,
 		channels=channels,
 		network=network,
-		rssobj=RSS('http://www.rssmix.com/u/8273687/rss.xml')
+		rssobj=RSS(local.RSSFEEDS)
 	)
 
 	MAIN_LOGGER.info('Connecting to irc server ')

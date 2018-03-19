@@ -13,6 +13,7 @@ import logging
 import re
 from html.parser import HTMLParser
 import feedparser
+import random
 
 
 class MLStripper(HTMLParser):
@@ -42,12 +43,12 @@ class RSS:
 	"""
 	RSS Class
 	"""
-	def __init__(self, rssurl):
+	def __init__(self, rssurls):
 		"""
 		Constructor method
 		"""
 		# rss feed url
-		self.rss_url = rssurl
+		self.rss_urls = rssurls
 
 		# six randomly selected urls
 		self.rssurls_rand = []
@@ -81,8 +82,13 @@ class RSS:
 
 		try:
 			fpobj = feedparser.parse(url)
-			print('entries: {}'.format(len(fpobj)))
 			self.news_entries = fpobj['entries']
+
+			# shuffle entries
+			self.news_entries = sorted(
+				self.news_entries,
+				key=lambda k: random.random()
+			)
 		except Exception as err:
 			self.logger.error('Feedparsing failed: %s', err)
 
@@ -91,11 +97,13 @@ class RSS:
 		"""
 		Get RSS feed information
 		"""
-		self.getNews(self.rss_url)
+		for rssurl in self.rss_urls:
+			self.getNews(rssurl)
 
 	def printArticle(self):
 		if self.news_entries:
 			self.logger.info('Sending single article')
+			print('News entries total {}'.format(len(self.news_entries)))
 			entry = self.news_entries[0]
 			try:
 				newsDesc = strip_tags(entry['description']).strip()
@@ -136,4 +144,4 @@ class RSS:
 		else:
 			self.logger.info('Article list is empty - refeeding')
 			self.readFeed()
-			self.printArticle()
+			return self.printArticle()

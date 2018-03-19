@@ -24,6 +24,7 @@ class IRCClient:
 		self.socket = None
 		self.connected = False
 		self.shownArticle = False
+		self.talkBack = False # to make bot respond to messages
 		self.pingcnt = 0 # keep count of ping for printing news
 		self.ctx = {}
 
@@ -62,37 +63,44 @@ class IRCClient:
 		self.logger.info("Starting loop to stay connected to server")
 
 		while True:
-			buf = str(self.socket.recv(4096))
-			lines = buf.split("\n")
+			buf = str(self.socket.recv(2048)).strip('\r\n')
+			lines = buf.splitlines()
 			for data in lines:
 				data = str(data).strip()
 
 				if data == '':
 					continue
 
-				# print("I<", data)
-				# print("\n\n")
+				print("\n\nIN<", data)
+				print("\n\n")
+
+				args = data.split(None, 3)
+				# print('args {}'.format(args))
 
 				# server ping/pong
 				if data.find('PING') != -1:
 					self.logger.info("Ping recieved")
 					self.pingcnt += 1
-					print("Ping found - cnt: {}".format(self.pingcnt))
-					n = data.split(':')[1]
+					print("\n\nPing found - cnt: {}\n\n".format(self.pingcnt))
+					pnumber = data.split(':')[1]
 
 					sthread = threading.Thread(target=self.send, kwargs={
-						'msg': 'PONG :' + n
+						'msg': 'PONG :' + pnumber
 					})
 					sthread.start()
 
 					# self.send('PONG :' + n)
+					print("\n\nPong {} sent\n\n".format(pnumber))
 					self.logger.info("Pong thread sent")
-					if self.connected is False:
+
+					# wait until 3rd ping to do after connected tasks
+					# this will prevent joining when not all welcome messages
+					# from the server are complete and blocking joining
+					if self.connected is False and self.pingcnt == 3:
 						self.perform()
 						self.connected = True
 
-				args = data.split(None, 3)
-				print('args', args)
+
 				if len(args) == 4:
 					self.ctx['sender'] = args[0][1:]
 
@@ -114,7 +122,7 @@ class IRCClient:
 					self.ctx['msg'] = self.ctx['msg'].replace('\r\n', '')
 					self.ctx['msg'] = self.ctx['msg'].replace('\'', '')
 
-					# print(self.ctx['msg'])
+					print(self.ctx)
 
 				# registering - needs work
 				if ipass:
@@ -130,48 +138,65 @@ class IRCClient:
 				# 		0:len(self.nickname)] ==
 				# 		self.nickname.lower() or self.ctx['target'] == self.nickname):
 
-				# thank for voice
-				if '+v' in self.ctx['msg']:
-					self.say(
-						'thank you ~ <3',
-						self.ctx['target']
-					)
-
-				# public messages directed to the bot
-				elif self.nickname.lower() in self.ctx['msg'].lower():
-					# something is speaking to the bot
-					query = self.ctx['msg']
-					if self.ctx['target'] != self.nickname:
-						query = query[len(self.nickname):]
-						query = query.lstrip(':,;. ')
-
-						# reply - later do some random replies like it is intelligent
-						self.logger.info(
-							'%s spoke to the bot in channel %s: %s',
-							self.ctx['sender'],
-							self.ctx['target'],
-							query
+				if self.ctx:
+					# thank for voice
+					if '+v {}'.format(self.nickname) in self.ctx['msg'] and 'MODE' in self.ctx['type']:
+						self.say(
+							'thank you ~ <3',
+							self.ctx['target']
 						)
 
-						# some basic commands
-						if self.ctx['msg'] == '!test':
+						# clear context
+						self.ctx = {}
+
+					# public messages directed to the bot
+					elif self.talkBack and self.nickname.lower() in self.ctx['msg'].lower():
+						# something is speaking to the bot
+						query = self.ctx['msg']
+						if self.ctx['target'] != self.nickname:
+							query = query[len(self.nickname):]
+							query = query.lstrip(':,;. ')
+
+							# reply - later do some random replies like it is intelligent
 							self.logger.info(
-								'!test command called by %s in channel %s',
+								'%s spoke to the bot in channel %s: %s',
 								self.ctx['sender'],
-								self.ctx['target']
+								self.ctx['target'],
+								query
 							)
 
-							self.say(
-								'{}, fuck off :3'.format(self.ctx['sender']),
-								self.ctx['target']
-							)
-						else:
-							self.say(
-								'{}, leave me alone >:0'.format(self.ctx['sender']),
-								self.ctx['target']
-							)
+							# some basic commands
+							if self.ctx['msg'] == '!test':
+								self.logger.info(
+									'!test command called by %s in channel %s',
+									self.ctx['sender'],
+									self.ctx['target']
+								)
 
-				if self.pingcnt != 0 and (self.pingcnt % 3) == 0:
+								self.say(
+									'{}, fuck off :3'.format(self.ctx['sender']),
+									self.ctx['target']
+								)
+							else:
+								self.say(
+									'{}, leave me alone >:0'.format(self.ctx['sender']),
+									self.ctx['target']
+								)
+
+						# clear context
+						self.ctx = {}
+
+					# quit bot if disconnected from server
+					elif 'ERROR' in self.ctx['sender'] and 'Closing' in self.ctx['type']:
+						print(self.ctx)
+						print('Closing IRCClient')
+						exit()
+
+					# clear context
+					else:
+						self.ctx = {}
+
+				if self.pingcnt != 0 and (self.pingcnt % 4) == 0:
 					print("pingcnt", self.pingcnt)
 					# every 10th ping say news
 					print("shownArticle", self.shownArticle)
@@ -184,14 +209,12 @@ class IRCClient:
 					self.shownArticle = False
 					print("shownArticle", self.shownArticle)
 
-
-
 	# IRC message protocol methods
 	def send(self, msg):
 		"""
 		Send message to IRC server via socket
 		"""
-		# print("I>", msg.encode('utf-8'))
+		print("OUT> {}".format(msg))
 		self.socket.send(bytearray(msg+"\r\n", "utf-8"))
 
 	def say(self, msg, to):
@@ -210,7 +233,6 @@ class IRCClient:
 		"""
 		for chan in self.channels:
 			for artline in self.rssobj.printArticle():
-				print("artline: {}", artline)
 				sthread = threading.Thread(target=self.send, kwargs={
 					'msg': "PRIVMSG %s :%s" % (chan, artline)
 				})
@@ -218,12 +240,13 @@ class IRCClient:
 
 	def perform(self):
 		"""
+		Initial operations to perform when first connected
 		Join channels
 		"""
 		self.send("MODE %s +x" % self.nickname)
 		for chan in self.channels:
 			self.send("JOIN %s" % chan)
-			print('Joined {}'.format(chan))
+			print('\n\nJoined {}\n\n'.format(chan))
 
 	# bot methods
 	def shutdown(self, channel=None):

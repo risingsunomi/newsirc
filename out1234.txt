@@ -1,0 +1,1 @@
+{'sender': 'ERROR', 'type': ':Closing', 'target': 'Link:', 'msg': 'pool-96-245-11-206.phlapa.fios.verizon.net (Registration timed out)\\r\\n'}
