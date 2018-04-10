@@ -55,8 +55,8 @@ class IRCClient:
 		self.socket.connect((self.network, 6667))
 
 		# identify self with irc server
-		self.send("NICK %s" % self.nickname)
-		self.send("USER %(nick)s %(nick)s %(nick)s :%(nick)s" % {
+		self.send("NICK %s\r\n" % self.nickname)
+		self.send("USER %(nick)s 0 * :newsbot IRC\r\n" % {
 			'nick': self.nickname
 		})
 
@@ -243,9 +243,9 @@ class IRCClient:
 		Initial operations to perform when first connected
 		Join channels
 		"""
-		self.send("MODE %s +x" % self.nickname)
+		self.send("MODE %s +x\r\n" % self.nickname)
 		for chan in self.channels:
-			self.send("JOIN %s" % chan)
+			self.send("JOIN %s\r\n" % chan)
 			print('\n\nJoined {}\n\n'.format(chan))
 
 	# bot methods
