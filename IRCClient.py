@@ -196,7 +196,7 @@ class IRCClient:
 					else:
 						self.ctx = {}
 
-				if self.pingcnt != 0 and (self.pingcnt % 4) == 0:
+				if self.pingcnt != 0 and (self.pingcnt % 2) == 0:
 					print("pingcnt", self.pingcnt)
 					# every 10th ping say news
 					print("shownArticle", self.shownArticle)

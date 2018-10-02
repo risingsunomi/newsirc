@@ -82,7 +82,11 @@ class RSS:
 
 		try:
 			fpobj = feedparser.parse(url)
-			self.news_entries = fpobj['entries']
+
+			if self.news_entries:
+				self.news_entries = self.news_entries + fpobj['entries']
+			else:	
+				self.news_entries = fpobj['entries']
 
 			# shuffle entries
 			self.news_entries = sorted(
